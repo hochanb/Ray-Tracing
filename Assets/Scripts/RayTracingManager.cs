@@ -56,6 +56,8 @@ public class RayTracingManager : MonoBehaviour
     bool hasBVH;
     LocalKeyword debugVisShaderKeyword;
 
+    public float FocusDistance { get=>focusDistance; set => focusDistance = value; }
+    public bool Accumulated { get => accumulate; set { accumulate = value; numAccumulatedFrames = 1; } }
 
     private void OnEnable()
     {
@@ -71,7 +73,7 @@ public class RayTracingManager : MonoBehaviour
             Debug.Log("Reset render");
         }
 
-        if (Input.GetKeyDown(KeyCode.S))
+        if (Input.GetKeyDown(KeyCode.P))
         {
             string path = System.IO.Path.Combine(Application.persistentDataPath, "screencap_ray.png");
             ScreenCapture.CaptureScreenshot(path);
@@ -221,7 +223,7 @@ public class RayTracingManager : MonoBehaviour
         {
             meshInfo[i].WorldToLocalMatrix = models[i].transform.worldToLocalMatrix;
             meshInfo[i].LocalToWorldMatrix = models[i].transform.localToWorldMatrix;
-            meshInfo[i].Material = models[i].material;
+            meshInfo[i].Material = models[i].Material;
         }
         modelBuffer.SetData(meshInfo);
         rayTracingMaterial.SetBuffer("ModelInfo", modelBuffer);
@@ -253,7 +255,7 @@ public class RayTracingManager : MonoBehaviour
                 NodeOffset = meshLookup[model.Mesh].nodeOffset,
                 TriangleOffset = meshLookup[model.Mesh].triOffset,
                 WorldToLocalMatrix = model.transform.worldToLocalMatrix,
-                Material = model.material
+                Material = model.Material
             });
         }
 

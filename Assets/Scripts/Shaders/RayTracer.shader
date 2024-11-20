@@ -88,7 +88,9 @@ Shader "Custom/RayTracer"
 				float smoothness;
 				float specularProbability;
 				int flag;
-			};
+				// extended (Be sure to match with structure that has been defined in C#)
+				float transparency;
+};
 
 			struct Model
 			{
@@ -188,7 +190,7 @@ Shader "Custom/RayTracer"
 
 			// --- Ray Intersection Functions ---
 
-			// Calculate the intersection of a ray with a triangle using Möller–Trumbore algorithm
+			// Calculate the intersection of a ray with a triangle using M?ler–Trumbore algorithm
 			// Thanks to https://stackoverflow.com/a/42752998
 			TriangleHitInfo RayTriangle(Ray ray, Triangle tri)
 			{
