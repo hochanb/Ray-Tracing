@@ -43,7 +43,10 @@ public class Model : MonoBehaviour
         RayTracingMaterial mat = Material;
         bool displayEmissiveCol = mat.colour.maxColorComponent < mat.emissionColour.maxColorComponent * mat.emissionStrength;
         Color displayCol = displayEmissiveCol ? mat.emissionColour * mat.emissionStrength : mat.colour;
-        meshRenderer.sharedMaterial.color = displayCol;
+        if(meshRenderer ==null) 
+            meshRenderer = GetComponent<MeshRenderer>();
+        if(meshRenderer !=null && meshRenderer.sharedMaterial != null) 
+            meshRenderer.sharedMaterial.color = displayCol;
     }
 
     public void SetMaterialAsset(MaterialAsset mat)

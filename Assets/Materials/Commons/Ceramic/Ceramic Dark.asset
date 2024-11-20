@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Ceramic Dark
   m_EditorClassIdentifier: 
   material:
-    colour: {r: 0.03, g: 0.03, b: 0.03, a: 0}
+    colour: {r: 0.01, g: 0.01, b: 0.01, a: 0}
     emissionColour: {r: 0, g: 0, b: 0, a: 0}
-    specularColour: {r: 0.09433961, g: 0.09433961, b: 0.09433961, a: 0}
+    specularColour: {r: 0.03, g: 0.03, b: 0.03, a: 0}
     emissionStrength: 0
-    smoothness: 0.921
-    specularProbability: 0.108
+    smoothness: 0.806
+    specularProbability: 0.252
     flag: 0
     transparency: 1

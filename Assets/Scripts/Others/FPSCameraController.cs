@@ -19,6 +19,8 @@ public class FPSCameraController : MonoBehaviour
         rayTracingManager.accumulate = false;
         focus.SetFocus();
         Cursor.lockState = CursorLockMode.Locked;
+
+        Debug.Log("Press Tab to toggle Move mode");
     }
 
     void Update()
@@ -70,6 +72,9 @@ public class FPSCameraController : MonoBehaviour
         // Get WASD input
         float moveX = Input.GetAxis("Horizontal"); // A/D
         float moveZ = Input.GetAxis("Vertical");   // W/S
+
+        moveX = moveX > 0.1f ? 1 : moveX < -0.1f ? -1 : 0;
+        moveZ = moveZ > 0.1f ? 1 : moveZ < -0.1f ? -1 : 0;
 
         // Calculate movement direction relative to the camera's orientation
         Vector3 moveDirection = (transform.forward * moveZ + transform.right * moveX).normalized;

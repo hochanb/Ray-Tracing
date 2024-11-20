@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Gold
   m_EditorClassIdentifier: 
   material:
-    colour: {r: 1, g: 0.63560516, b: 0, a: 0}
+    colour: {r: 0.94509804, g: 0.6717804, b: 0.11764705, a: 0}
     emissionColour: {r: 0, g: 0, b: 0, a: 0}
-    specularColour: {r: 0.8867924, g: 0.5540666, b: 0.22922742, a: 0}
+    specularColour: {r: 0.9528302, g: 0.5931654, b: 0.13843001, a: 0}
     emissionStrength: 0
-    smoothness: 0.881
-    specularProbability: 0.778
+    smoothness: 0.895
+    specularProbability: 0.834
     flag: 0
     transparency: 1
