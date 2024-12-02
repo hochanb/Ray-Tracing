@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
 
-public class RayTracingManager : MonoBehaviour
+public class RayTracingManager : MonoBehaviour, ITickUpdate
 {
     public enum VisMode
     {
@@ -81,6 +81,11 @@ public class RayTracingManager : MonoBehaviour
         }
     }
 
+    public void ResetRender()
+    {
+        numAccumulatedFrames = 0;
+    }
+
     // Called after any camera (e.g. game or scene camera) has finished rendering into the src texture
     void OnRenderImage(RenderTexture src, RenderTexture target)
     {
@@ -106,7 +111,7 @@ public class RayTracingManager : MonoBehaviour
         }
         else
         {
-            Camera.current.cullingMask = rayTracingEnabled ? 0 : 2147483647;
+            Camera.current.cullingMask = rayTracingEnabled ? 1<<31 : 2147483647;
             if (rayTracingEnabled && !useSceneView)
             {
                 InitFrame();

@@ -89,7 +89,7 @@ Shader "Custom/RayTracer"
 				float specularProbability;
 				int flag;
 				// extended (Be sure to match with structure that has been defined in C#)
-				float transparency;
+				//float transparency;
 };
 
 			struct Model

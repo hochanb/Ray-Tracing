@@ -21,9 +21,9 @@ public struct RayTracingMaterial
 
 	// extended (Be sure to match with structure that has been defined in RayTracer.shader)
 
-	[Header("Extended")]
+	//[Header("Extended")]
 	// Add other properties
-	[Range(0, 1)] public float transparency;    // 1 is full opaque
+	//[Range(0, 1)] public float transparency;    // 1 is full opaque
 
 
 
