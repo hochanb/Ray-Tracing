@@ -2,7 +2,10 @@ using NaughtyAttributes;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
+using UnityEditor.Experimental.Rendering;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class TickManager : MonoBehaviour
 {
@@ -49,6 +52,12 @@ public class TickManager : MonoBehaviour
             if(totalTicks >= maxTicks) 
             {
                 running = false;
+#if UNITY_EDITOR
+                if (EditorApplication.isPlaying)
+                {
+                    EditorApplication.isPaused = true;
+                }
+#endif
             }
         }
     }
@@ -64,7 +73,7 @@ public class TickManager : MonoBehaviour
         foreach (var m in monos)
             m.LateTickUpdate(dt);
 
-        Debug.Log("Total ticks: " + totalTicks + " / elapsed time: " + Time.timeSinceLevelLoad);
+        Debug.Log("Total ticks: " + (totalTicks+1) + " / elapsed time: " + Time.timeSinceLevelLoad);
     }
 
     [Button]
