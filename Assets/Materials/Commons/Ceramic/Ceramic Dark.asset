@@ -20,4 +20,5 @@ MonoBehaviour:
     smoothness: 0.806
     specularProbability: 0.252
     flag: 0
-    transparency: 1
+    transparency: 0
+    eta: 0

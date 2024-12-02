@@ -24,7 +24,7 @@ public struct RayTracingMaterial
 
 	//[Header("Extended")]
 	// Add other properties
-	//[Range(0, 1)] public float transparency;    // 1 is full opaque
+	[Range(0, 1)] public float transparency;    // 1 is full opaque
 
 	[Range(0, 10)] public float eta;
 

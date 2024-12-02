@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b5bfd1ca12deff3428df9e49d5542f04, type: 3}
-  m_Name: Dark Steel
+  m_Name: Diffused Glass
   m_EditorClassIdentifier: 
   material:
-    colour: {r: 0.1981132, g: 0.1981132, b: 0.1981132, a: 0}
-    emissionColour: {r: 0, g: 0, b: 0, a: 0}
-    specularColour: {r: 0.46226418, g: 0.46226418, b: 0.46226418, a: 0}
+    colour: {r: 1, g: 1, b: 1, a: 1}
+    emissionColour: {r: 1, g: 1, b: 1, a: 1}
+    specularColour: {r: 1, g: 1, b: 1, a: 1}
     emissionStrength: 0
-    smoothness: 0.986
-    specularProbability: 0.894
+    smoothness: 0.214
+    specularProbability: 0.122
     flag: 0
-    transparency: 0
-    eta: 0
+    transparency: 0.473
+    eta: 9.54
