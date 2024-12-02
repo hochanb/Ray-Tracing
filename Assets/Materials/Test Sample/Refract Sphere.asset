@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b5bfd1ca12deff3428df9e49d5542f04, type: 3}
-  m_Name: Lantern Light
+  m_Name: Refract Sphere
   m_EditorClassIdentifier: 
   material:
-    colour: {r: 1, g: 0.87191755, b: 0.7490566, a: 0}
-    emissionColour: {r: 1, g: 0.53205127, b: 0, a: 0}
+    colour: {r: 0.6509434, g: 0.42829517, b: 0.094571, a: 0}
+    emissionColour: {r: 0, g: 0, b: 0, a: 0}
     specularColour: {r: 0, g: 0, b: 0, a: 0}
-    emissionStrength: 5
-    smoothness: 0.122
+    emissionStrength: 0
+    smoothness: 0
     specularProbability: 0
     flag: 0
     transparency: 1

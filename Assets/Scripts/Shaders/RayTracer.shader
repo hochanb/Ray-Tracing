@@ -77,6 +77,7 @@ Shader "Custom/RayTracer"
 				float3 hitPoint;
 				float3 normal;
 				int triIndex;
+				bool hitFront;
 			};
 
 			struct RayTracingMaterial
@@ -89,7 +90,8 @@ Shader "Custom/RayTracer"
 				float specularProbability;
 				int flag;
 				// extended (Be sure to match with structure that has been defined in C#)
-				//float transparency;
+				float transparency;
+				float eta;
 };
 
 			struct Model
@@ -118,6 +120,7 @@ Shader "Custom/RayTracer"
 				float3 hitPoint;
 				float dst;
 				RayTracingMaterial material;
+				bool hitFront;
 			};
 
 			// --- Buffers (and their sizes) ---	
@@ -190,7 +193,7 @@ Shader "Custom/RayTracer"
 
 			// --- Ray Intersection Functions ---
 
-			// Calculate the intersection of a ray with a triangle using M?ler–Trumbore algorithm
+			// Calculate the intersection of a ray with a triangle using M?lerï¿½Trumbore algorithm
 			// Thanks to https://stackoverflow.com/a/42752998
 			TriangleHitInfo RayTriangle(Ray ray, Triangle tri)
 			{
@@ -215,6 +218,7 @@ Shader "Custom/RayTracer"
 				hitInfo.hitPoint = ray.origin + ray.dir * dst;
 				hitInfo.normal = normalize(tri.normA * w + tri.normB * u + tri.normC * v);
 				hitInfo.dst = dst;
+				hitInfo.hitFront = determinant > 0;
 				return hitInfo;
 			}
 
@@ -316,6 +320,7 @@ Shader "Custom/RayTracer"
 						result.normal = normalize(mul(model.localToWorldMatrix, float4(hit.normal, 0)));
 						result.hitPoint = worldRay.origin + worldRay.dir * hit.dst;
 						result.material = model.material;
+						result.hitFront = hit.hitFront;
 					}
 				}
 
@@ -325,6 +330,12 @@ Shader "Custom/RayTracer"
 			float2 mod2(float2 x, float2 y)
 			{
 				return x - y * floor(x / y);
+			}
+
+			float reflectance(float cosine, float eta) {
+				float r0 = (1 - eta) / (1 + eta);
+				r0 = r0 * r0;
+				return r0 + (1 - r0) * pow((1 - cosine), 5);
 			}
 
 			float3 Trace(float3 rayOrigin, float3 rayDir, inout uint rngState)
@@ -358,7 +369,38 @@ Shader "Custom/RayTracer"
 						rayOrigin = hitInfo.hitPoint;
 						float3 diffuseDir = normalize(hitInfo.normal + RandomDirection(rngState));
 						float3 specularDir = reflect(rayDir, hitInfo.normal);
-						rayDir = normalize(lerp(diffuseDir, specularDir, material.smoothness * isSpecularBounce));
+						float eta_div = hitInfo.hitFront ? 1.0 / material.eta : material.eta;
+						float3 refractDir = refract(rayDir, hitInfo.normal, eta_div);
+						
+						if (material.transparency == 0) {
+							rayDir = normalize(lerp(diffuseDir, specularDir, material.smoothness * isSpecularBounce));
+						} else {
+							// Check total internal reflection
+							float cosTheta = min(1.0, dot(-rayDir, hitInfo.normal));
+							float sinTheta = sqrt(1 - cosTheta * cosTheta);
+							float sinPhi = sinTheta * eta_div;
+
+							// Schlick's approximation
+							float reflectProb = reflectance(cosTheta, eta_div);
+
+
+							if (sinPhi > 1 || RandomValue(rngState) < reflectProb) {
+								rayDir = specularDir;
+							} else {
+								if (hitInfo.hitFront) {
+									// Div with transparency
+									if (RandomValue(rngState) < material.transparency) {
+										rayDir = refractDir;
+									} else {
+										rayDir = normalize(lerp(diffuseDir, specularDir, material.smoothness * isSpecularBounce));
+									}
+								} else {
+									// Div without transparency
+									rayDir = refractDir;
+								}
+							}
+
+						}
 
 						// Update light calculations
 						float3 emittedLight = material.emissionColour * material.emissionStrength;

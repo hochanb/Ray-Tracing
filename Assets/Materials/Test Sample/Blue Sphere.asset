@@ -18,6 +18,6 @@ MonoBehaviour:
     specularColour: {r: 0, g: 0, b: 0, a: 0}
     emissionStrength: 0
     smoothness: 1
-    specularProbability: 0.1
+    specularProbability: 0.236
     flag: 0
     transparency: 1

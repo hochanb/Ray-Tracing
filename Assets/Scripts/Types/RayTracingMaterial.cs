@@ -7,7 +7,8 @@ public struct RayTracingMaterial
 	{
 		None,
 		CheckerPattern,
-		InvisibleLight
+		InvisibleLight,
+		Fog
 	}
 
 	[Header("Basics")]
@@ -25,6 +26,8 @@ public struct RayTracingMaterial
 	// Add other properties
 	//[Range(0, 1)] public float transparency;    // 1 is full opaque
 
+	[Range(0, 10)] public float eta;
+
 
 
 	public void SetDefaultValues()
@@ -35,6 +38,8 @@ public struct RayTracingMaterial
 		specularColour = Color.white;
 		smoothness = 0;
 		specularProbability = 1;
-		//transparency = 1;
+		transparency = 0;
+		eta = 1;
 	}
+
 }
