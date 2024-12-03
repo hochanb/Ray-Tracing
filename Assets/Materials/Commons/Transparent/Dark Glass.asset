@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Dark Glass
   m_EditorClassIdentifier: 
   material:
-    colour: {r: 0.4339623, g: 0.4339623, b: 0.4339623, a: 1}
+    colour: {r: 0.2735849, g: 0.2735849, b: 0.2735849, a: 1}
     emissionColour: {r: 1, g: 1, b: 1, a: 1}
-    specularColour: {r: 0.16037738, g: 0.16037738, b: 0.16037738, a: 1}
+    specularColour: {r: 0.9056604, g: 0.9056604, b: 0.9056604, a: 1}
     emissionStrength: 0
-    smoothness: 0.533
-    specularProbability: 0.33
+    smoothness: 0.866
+    specularProbability: 0.626
     flag: 0
-    transparency: 0.986
-    eta: 9.21
+    transparency: 1
+    eta: 1.51

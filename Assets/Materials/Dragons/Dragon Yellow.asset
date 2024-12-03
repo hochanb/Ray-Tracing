@@ -13,11 +13,15 @@ MonoBehaviour:
   m_Name: Dragon Yellow
   m_EditorClassIdentifier: 
   material:
-    colour: {r: 0.9622642, g: 0.5221968, b: 0.06808472, a: 1}
+    colour: {r: 1, g: 1, b: 1, a: 1}
     emissionColour: {r: 0, g: 0, b: 0, a: 0}
     specularColour: {r: 1, g: 1, b: 1, a: 0}
     emissionStrength: 0
-    smoothness: 0.482
-    specularProbability: 0.274
+    smoothness: 1
+    specularProbability: 0
     flag: 0
-    transparency: 1
+    transparency: 0
+    eta: 1.03
+    albedoTex: {fileID: 0}
+    normalTex: {fileID: 0}
+    roughnessTex: {fileID: 0}

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
+using System.Linq;
 
 public class RayTracingManager : MonoBehaviour, ITickUpdate
 {
@@ -50,9 +51,14 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
     ComputeBuffer triangleBuffer;
     ComputeBuffer nodeBuffer;
     ComputeBuffer modelBuffer;
+    Texture2DArray albedoTexArray;
+    Texture2DArray normalTexArray;
+    Texture2DArray roughnessTexArray;
 
     MeshInfo[] meshInfo;
     Model[] models;
+
+
     bool hasBVH;
     LocalKeyword debugVisShaderKeyword;
 
@@ -181,6 +187,15 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
             // Node buffer
             ShaderHelper.CreateStructuredBuffer(ref nodeBuffer, data.nodes);
             rayTracingMaterial.SetBuffer("Nodes", nodeBuffer);
+
+            // Texture buffer
+            ShaderHelper.CreateTextureArrayBuffer(ref albedoTexArray, data.albedoTextures);
+            ShaderHelper.CreateTextureArrayBuffer(ref normalTexArray, data.normalTextures);
+            ShaderHelper.CreateTextureArrayBuffer(ref roughnessTexArray, data.roughnessTextures);
+            rayTracingMaterial.SetTexture("AlbedoTextures", albedoTexArray);
+            rayTracingMaterial.SetTexture("NormalTextures", normalTexArray);
+            rayTracingMaterial.SetTexture("RoughnessTextures", roughnessTexArray);
+
         }
         UpdateModels();
         // Update data
@@ -228,7 +243,7 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
         {
             meshInfo[i].WorldToLocalMatrix = models[i].transform.worldToLocalMatrix;
             meshInfo[i].LocalToWorldMatrix = models[i].transform.localToWorldMatrix;
-            meshInfo[i].Material = models[i].Material;
+            meshInfo[i].Material = new RTMatData(models[i].Material);
         }
         modelBuffer.SetData(meshInfo);
         rayTracingMaterial.SetBuffer("ModelInfo", modelBuffer);
@@ -239,6 +254,9 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
     {
         MeshDataLists allData = new();
         Dictionary<Mesh, (int nodeOffset, int triOffset)> meshLookup = new();
+        Dictionary<Texture2D, int> albedoTexLookup = new() { { Texture2D.whiteTexture, 0 }};
+        Dictionary<Texture2D, int> normalTexLookup = new() { { Texture2D.whiteTexture, 0 } };
+        Dictionary<Texture2D, int> roughnessTexLookup = new() { { Texture2D.whiteTexture, 0 } };
 
         foreach (Model model in models)
         {
@@ -247,12 +265,54 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
             {
                 meshLookup.Add(model.Mesh, (allData.nodes.Count, allData.triangles.Count));
 
-                BVH bvh = new(model.Mesh.vertices, model.Mesh.triangles, model.Mesh.normals);
+                BVH bvh = new(model.Mesh.vertices, model.Mesh.triangles, model.Mesh.normals, model.Mesh.tangents.Select(t=>new Vector3(t.x,t.y,t.z)).ToArray(), model.Mesh.uv);
                 if (model.logBVHStats) Debug.Log($"BVH Stats: {model.gameObject.name}\n{bvh.stats}");
 
                 allData.triangles.AddRange(bvh.GetTriangles());
                 allData.nodes.AddRange(bvh.GetNodes());
             }
+
+            var mat = new RTMatData(model.Material);
+            int idx = 0;
+
+            if (model.Material.albedoTex == null)
+            { }
+            else if (albedoTexLookup.TryGetValue(model.Material.albedoTex, out idx))
+            { }
+            else
+            {
+                idx = albedoTexLookup.Count;
+                albedoTexLookup.Add(model.Material.albedoTex, albedoTexLookup.Count);
+            }
+
+            mat.albetoTex = idx;
+            model.Material.albedoIdx = idx;
+
+            if (model.Material.normalTex == null)
+            { }
+            else if (normalTexLookup.TryGetValue(model.Material.normalTex, out idx))
+            { }
+            else
+            {
+                idx = normalTexLookup.Count;
+                normalTexLookup.Add(model.Material.normalTex, normalTexLookup.Count);
+            }
+
+            mat.normalTex = idx;
+            model.Material.normalIdx = idx;
+
+            if (model.Material.roughnessTex == null)
+            { }
+            else if (roughnessTexLookup.TryGetValue(model.Material.roughnessTex, out idx))
+            { }
+            else
+            {
+                idx = roughnessTexLookup.Count;
+                roughnessTexLookup.Add(model.Material.roughnessTex, roughnessTexLookup.Count);
+            }
+
+            mat.roughnessTex = idx;
+            model.Material.roughnessIdx = idx;
 
             // Create the mesh info
             allData.meshInfo.Add(new MeshInfo()
@@ -260,9 +320,17 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
                 NodeOffset = meshLookup[model.Mesh].nodeOffset,
                 TriangleOffset = meshLookup[model.Mesh].triOffset,
                 WorldToLocalMatrix = model.transform.worldToLocalMatrix,
-                Material = model.Material
-            });
+                Material = mat
+            }) ;
         }
+
+        allData.albedoTextures = albedoTexLookup.Select(kv=>kv.Key).ToArray();
+        allData.albedoTextures[0] = Texture2D.whiteTexture; // null to white texture
+        allData.normalTextures = normalTexLookup.Select(kv=>kv.Key).ToArray();
+        allData.normalTextures[0] = Texture2D.normalTexture; 
+        allData.roughnessTextures = roughnessTexLookup.Select(kv=>kv.Key).ToArray();
+        allData.roughnessTextures[0] = Texture2D.blackTexture;
+
 
         return allData;
     }
@@ -273,6 +341,10 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
         public List<Triangle> triangles = new();
         public List<BVH.Node> nodes = new();
         public List<MeshInfo> meshInfo = new();
+
+        public Texture2D[] albedoTextures;
+        public Texture2D[] normalTextures;
+        public Texture2D[] roughnessTextures;
     }
 
     void OnDestroy()
@@ -295,6 +367,6 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
         public int TriangleOffset;
         public Matrix4x4 WorldToLocalMatrix;
         public Matrix4x4 LocalToWorldMatrix;
-        public RayTracingMaterial Material;
+        public RTMatData Material;
     }
 }

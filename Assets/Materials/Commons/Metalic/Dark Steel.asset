@@ -13,12 +13,15 @@ MonoBehaviour:
   m_Name: Dark Steel
   m_EditorClassIdentifier: 
   material:
-    colour: {r: 0.1981132, g: 0.1981132, b: 0.1981132, a: 0}
+    colour: {r: 0.099, g: 0.099, b: 0.099, a: 0}
     emissionColour: {r: 0, g: 0, b: 0, a: 0}
-    specularColour: {r: 0.46226418, g: 0.46226418, b: 0.46226418, a: 0}
+    specularColour: {r: 0.254717, g: 0.254717, b: 0.254717, a: 0}
     emissionStrength: 0
     smoothness: 0.986
     specularProbability: 0.894
     flag: 0
     transparency: 0
     eta: 0
+    albedoTex: {fileID: 0}
+    normalTex: {fileID: 0}
+    roughnessTex: {fileID: 0}

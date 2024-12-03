@@ -13,11 +13,12 @@ MonoBehaviour:
   m_Name: Refract Sphere
   m_EditorClassIdentifier: 
   material:
-    colour: {r: 0.6509434, g: 0.42829517, b: 0.094571, a: 0}
+    colour: {r: 1, g: 1, b: 1, a: 0}
     emissionColour: {r: 0, g: 0, b: 0, a: 0}
-    specularColour: {r: 0, g: 0, b: 0, a: 0}
+    specularColour: {r: 1, g: 1, b: 1, a: 1}
     emissionStrength: 0
-    smoothness: 0
-    specularProbability: 0
+    smoothness: 1
+    specularProbability: 1
     flag: 0
-    transparency: 1
+    transparency: 0.965
+    eta: 1.03

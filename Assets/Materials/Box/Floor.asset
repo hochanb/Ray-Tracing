@@ -17,7 +17,8 @@ MonoBehaviour:
     emissionColour: {r: 0.8962264, g: 0.871157, b: 0.81590426, a: 0.9490196}
     specularColour: {r: 1, g: 1, b: 1, a: 0}
     emissionStrength: 0
-    smoothness: 1
+    smoothness: 0.277
     specularProbability: 0.086
     flag: 1
-    transparency: 1
+    transparency: 0
+    eta: 0

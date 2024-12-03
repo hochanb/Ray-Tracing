@@ -45,8 +45,20 @@ public class Model : MonoBehaviour
         Color displayCol = displayEmissiveCol ? mat.emissionColour * mat.emissionStrength : mat.colour;
         if(meshRenderer ==null) 
             meshRenderer = GetComponent<MeshRenderer>();
-        if(meshRenderer !=null && meshRenderer.sharedMaterial != null) 
-            meshRenderer.sharedMaterial.color = displayCol;
+        if(meshRenderer !=null && meshRenderer.sharedMaterial != null)
+        {
+            var sm = meshRenderer.sharedMaterial;
+            sm.color = displayCol;
+            sm.SetColor("_EmissionColor", mat.emissionColour * mat.emissionStrength); // Emission color
+            sm.SetFloat("_Glossiness", mat.smoothness); // Smoothness (Glossiness in Standard Shader)
+            sm.SetFloat("_Metallic", mat.specularProbability); // Metallic (maps specular probability for roughness/metallic workflow)
+
+            // Set textures
+            sm.SetTexture("_MainTex", mat.albedoTex); // Albedo texture
+            sm.SetTexture("_BumpMap", mat.normalTex); // Normal map
+            sm.SetTexture("_MetallicGlossMap", mat.roughnessTex); // Metallic/Glossiness map
+
+        }
     }
 
     public void SetMaterialAsset(MaterialAsset mat)

@@ -317,6 +317,63 @@ public static class ShaderHelper
         return buffer;
     }
 
+    public static void CreateTextureArrayBuffer(ref Texture2DArray array, Texture2D[] textures, int w = 1024, int h = 1024, TextureFormat format = TextureFormat.RGBA32, bool mipChain = true, bool linear = false)
+    {
+        if (textures == null || textures.Length == 0)
+        {
+            Debug.LogError("No textures provided to create a Texture2DArray.");
+            return;
+        }
+
+        // 텍스처 크기와 배열 레이어 크기 결정
+        int width = w;
+        int height = h;
+        int textureCount = textures.Length;
+
+        // Texture2DArray 생성
+        Texture2DArray textureArray = new Texture2DArray(width, height, textureCount, format, mipChain, linear)
+        {
+            wrapMode = TextureWrapMode.Repeat,
+            filterMode = FilterMode.Bilinear
+        };
+
+        // 텍스처를 Texture2DArray에 복사
+        for (int i = 0; i < textureCount; i++)
+        {
+            if (textures[i].width != width || textures[i].height != height)
+                textures[i] = ResizeTexture(textures[i], w, h);
+
+            textures[i].Apply();
+
+            Graphics.CopyTexture(textures[i], 0, 0, textureArray, i, 0);
+        }
+
+        array = textureArray;
+        array.Apply();
+    }
+
+    private static Texture2D ResizeTexture(Texture2D source, int targetWidth, int targetHeight)
+    {
+        RenderTexture rt = RenderTexture.GetTemporary(targetWidth, targetHeight, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Linear);
+        RenderTexture.active = rt;
+
+        // Copy source texture to the RenderTexture
+        Graphics.Blit(source, rt);
+
+        // Create a new Texture2D with the correct format
+        Texture2D result = new Texture2D(targetWidth, targetHeight, TextureFormat.RGBA32, source.mipmapCount > 1, linear: false);
+        result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
+        result.Apply(); // Upload texture to GPU
+
+        RenderTexture.active = null;
+        RenderTexture.ReleaseTemporary(rt);
+
+        return result;
+    }
+
+
+
+
     // Read number of elements in append buffer
     public static int ReadAppendBufferLength(ComputeBuffer appendBuffer)
     {

@@ -15,10 +15,10 @@ MonoBehaviour:
   material:
     colour: {r: 0.37169808, g: 0.6873521, b: 1, a: 1}
     emissionColour: {r: 1, g: 1, b: 1, a: 1}
-    specularColour: {r: 0, g: 0.17015986, b: 0.4339623, a: 1}
+    specularColour: {r: 0.044428576, g: 0.31227607, b: 0.735849, a: 1}
     emissionStrength: 0
     smoothness: 0.473
     specularProbability: 0.219
     flag: 0
-    transparency: 0.917
-    eta: 9.21
+    transparency: 1
+    eta: 1.51
