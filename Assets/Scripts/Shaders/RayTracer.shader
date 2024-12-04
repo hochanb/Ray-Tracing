@@ -1,19 +1,19 @@
 Shader"Custom/RayTracer"
 {
+
+    Properties
+    {
+        _AlbedoTex ("Albedo Texture", 2D) = "white" {}
+        _IllumiTex ("Illumination Texture", 2D) = "white" {}
+    }
+
 	SubShader
 	{
 Cull Off
 ZWrite Off
 ZTest Always
 
-		Pass
-		{
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			#pragma require 2darray
-#include "UnityCG.cginc"
-			#pragma multi_compile _ DEBUG_VIS
+CGINCLUDE
 
 
 struct appdata
@@ -27,7 +27,6 @@ struct v2f
     float2 uv : TEXCOORD0;
     float4 vertex : SV_POSITION;
 };
-
 v2f vert(appdata v)
 {
     v2f o;
@@ -36,38 +35,38 @@ v2f vert(appdata v)
     return o;
 }
 
-			// --- Settings and constants ---
+
+// --- Settings and constants ---
 static const float PI = 3.1415;
 
-			// Raytracing Settings
+// Raytracing Settings
 int MaxBounceCount;
 int NumRaysPerPixel;
 int Frame;
 
-			// Camera settings
+// Camera settings
 float DefocusStrength;
 float DivergeStrength;
 float3 ViewParams;
 float4x4 CamLocalToWorldMatrix;
 
-			// Sky settings
+// Sky settings
 int UseSky;
 float3 SunColour;
 float SunFocus = 500;
 float SunIntensity = 10;
 
-			// Debug settings
+// Debug settings
 int visMode;
 float debugVisScale;
 
-			// Textures
-			//Texture2DArray AlbedoTextures;
-			//Texture2DArray NormalTextures;
-			//Texture2DArray RoughnessTextures;
-			UNITY_DECLARE_TEX2DARRAY(AlbedoTextures);
-			UNITY_DECLARE_TEX2DARRAY(NormalTextures);
-			UNITY_DECLARE_TEX2DARRAY(RoughnessTextures);
-			//SamplerState Sampler;
+// Textures
+UNITY_DECLARE_TEX2DARRAY(AlbedoTextures);
+UNITY_DECLARE_TEX2DARRAY(NormalTextures);
+UNITY_DECLARE_TEX2DARRAY(RoughnessTextures);
+
+sampler2D _AlbedoTex;
+sampler2D _IllumiTex;
 
 			// --- Structures ---
 struct Ray
@@ -146,17 +145,17 @@ struct ModelHitInfo
     bool hitFront;
 };
 
-			// --- Buffers (and their sizes) ---	
+// --- Buffers (and their sizes) ---	
 StructuredBuffer<Model> ModelInfo;
 StructuredBuffer<Triangle> Triangles;
 StructuredBuffer<BVHNode> Nodes;
 int triangleCount;
 int modelCount;
 
-			// ---- RNG Functions ----
+// ---- RNG Functions ----
 
-			// PCG (permuted congruential generator). Thanks to:
-			// www.pcg-random.org and www.shadertoy.com/view/XlGcRh
+// PCG (permuted congruential generator). Thanks to:
+// www.pcg-random.org and www.shadertoy.com/view/XlGcRh
 uint NextRandom(inout uint state)
 {
     state = state * 747796405 + 2891336453;
@@ -196,7 +195,7 @@ float2 RandomPointInCircle(inout uint rngState)
     return pointOnCircle * sqrt(RandomValue(rngState));
 }
 
-			// Crude sky colour function for background light
+// Crude sky colour function for background light
 float3 GetEnvironmentLight(float3 dir)
 {
     if (UseSky == 0)
@@ -217,7 +216,7 @@ float3 GetEnvironmentLight(float3 dir)
 
 float3 SampleAndTransformNormalMap(float3 uv3, float3 tangent, float3 bitangent, float3 normal)
 {
-				// Sample the normal map texture
+	// Sample the normal map texture
     float3 tangentSpaceNormal = UNITY_SAMPLE_TEX2DARRAY(NormalTextures, uv3).rgb;
     tangentSpaceNormal = tangentSpaceNormal * 2.0f - 1.0f;
     float3x3 tbn = float3x3(tangent, bitangent, normal);
@@ -405,6 +404,20 @@ float reflectance(float cosine, float eta)
     return r0 + (1 - r0) * pow((1 - cosine), 5);
 }
 
+float3 TraceAlbedo(float3 rayOrigin, float3 rayDir)
+{
+    Ray ray;
+    ray.origin = rayOrigin + rayDir * 1E-6;
+    ray.dir = rayDir;
+    int2 stats;
+    
+    ModelHitInfo hitInfo = CalculateRayCollision(ray, stats);
+    
+    RTMatData material = hitInfo.material;
+    
+    return material.albedoTex > 0 ? material.colour * UNITY_SAMPLE_TEX2DARRAY(AlbedoTextures, float3(hitInfo.uv, material.albedoTex)) : material.colour;
+}
+
 float3 Trace(float3 rayOrigin, float3 rayDir, inout uint rngState)
 {
     float3 incomingLight = 0;
@@ -495,10 +508,10 @@ float3 Trace(float3 rayOrigin, float3 rayDir, inout uint rngState)
 
 						// Random early exit if ray colour is nearly 0 (can't contribute much to final result)
             float p = max(rayColour.r, max(rayColour.g, rayColour.b));
-            if (RandomValue(rngState) >= p)
-            {
-                break;
-            }
+            //if (RandomValue(rngState) >= p)
+            //{
+            //    break;
+            //}
             rayColour *= 1.0f / p;
         }
         else
@@ -549,8 +562,21 @@ float3 TraceDebugMode(float3 rayOrigin, float3 rayDir)
 }
 
 
-			// Run for every pixel in the display
-float4 frag(v2f i) : SV_Target
+
+ENDCG
+
+Pass
+{
+CGPROGRAM
+#pragma vertex vert
+#pragma fragment frag1
+#pragma require 2darray
+#include "UnityCG.cginc"
+#pragma multi_compile _ DEBUG_VIS
+
+
+// Run for every pixel in the display
+float4 frag1(v2f i) : SV_Target
 {
 				// Create seed for random number generator
     uint2 numPixels = _ScreenParams.xy;
@@ -571,6 +597,7 @@ float4 frag(v2f i) : SV_Target
 				
 				// Trace multiple rays and average together
     float3 totalIncomingLight = 0;
+    float3 albedo = 0;
 
     for (int rayIndex = 0; rayIndex < NumRaysPerPixel; rayIndex++)
     {
@@ -587,14 +614,120 @@ float4 frag(v2f i) : SV_Target
 
 					// Trace
         totalIncomingLight += Trace(rayOrigin, rayDir, rngState);
+        albedo += TraceAlbedo(rayOrigin, rayDir);
+
+    }
+
+    albedo /= NumRaysPerPixel;
+    float3 pixelCol = totalIncomingLight / NumRaysPerPixel;
+    float3 illumination = pixelCol / albedo;
+    return float4(illumination, 1);
+}
+
+ENDCG
+}
+
+
+Pass
+{
+CGPROGRAM
+#pragma vertex vert
+#pragma fragment frag2
+#pragma require 2darray
+#include "UnityCG.cginc"
+#pragma multi_compile _ DEBUG_VIS
+float4 frag2(v2f i) : SV_Target
+{
+	// Create seed for random number generator
+    uint2 numPixels = _ScreenParams.xy;
+    uint2 pixelCoord = i.uv * numPixels;
+    uint pixelIndex = pixelCoord.y * numPixels.x + pixelCoord.x;
+    uint rngState = pixelIndex + Frame * 719393; //
+
+				// Calculate focus point
+    float3 focusPointLocal = float3(i.uv - 0.5, 1) * ViewParams;
+    float3 focusPoint = mul(CamLocalToWorldMatrix, float4(focusPointLocal, 1));
+    float3 camRight = CamLocalToWorldMatrix._m00_m10_m20;
+    float3 camUp = CamLocalToWorldMatrix._m01_m11_m21;
+
+				// Debug Mode
+#if DEBUG_VIS
+					return float4(TraceDebugMode(_WorldSpaceCameraPos, normalize(focusPoint - _WorldSpaceCameraPos)), 1);
+#endif
+				
+				// Trace multiple rays and average together
+    float3 albedo = 0;
+
+    for (int rayIndex = 0; rayIndex < NumRaysPerPixel; rayIndex++)
+    {
+					// -- Calculate ray origin and direction --
+					// Jitter the starting point of the ray. This allows for a depth of field effect.
+        float2 defocusJitter = RandomPointInCircle(rngState) * DefocusStrength / numPixels.x;
+        float3 rayOrigin = _WorldSpaceCameraPos + camRight * defocusJitter.x + camUp * defocusJitter.y;
+
+					// Jitter the focus point when calculating the ray direction to allow for blurring the image
+					// (at low strengths, this can be used for anti-aliasing)
+        float2 jitter = RandomPointInCircle(rngState) * DivergeStrength / numPixels.x;
+        float3 jitteredFocusPoint = focusPoint + camRight * jitter.x + camUp * jitter.y;
+        float3 rayDir = normalize(jitteredFocusPoint - rayOrigin);
+
+					// Trace
+        albedo += TraceAlbedo(rayOrigin, rayDir);
     }
 
 
-    float3 pixelCol = totalIncomingLight / NumRaysPerPixel;
-    return float4(pixelCol, 1);
+    albedo = albedo / NumRaysPerPixel;
+    return float4(albedo, 1);
+}
+ENDCG
 }
 
-			ENDCG
-		}
+Pass
+{
+CGPROGRAM
+#pragma vertex vert
+#pragma fragment frag3
+#pragma require 2darray
+#include "UnityCG.cginc"
+#pragma multi_compile _ DEBUG_VIS
+
+
+const static float sig2 = 0.9f;
+const static int k = 5;    // kernel wh
+
+float Gaussian(float x, float y)
+{
+    float e = exp(-(x * x + y * y) / (2 * sig2));
+    return e / (2 * PI * sig2);
+}
+
+float4 frag3(v2f i) : SV_Target
+{
+    uint2 numPixels = _ScreenParams.xy;
+    float2 du = float2(1.0f / numPixels.x, 0);
+    float2 dv = float2(0, 1.0f / numPixels.y);
+    
+    //return tex2D(_IllumiTex, i.uv);
+    half4 illumi = half4(0, 0, 0, 0);
+    
+    int k2 = k / 2;
+    
+    for (int xi = -k2; xi <= k2; xi++)
+        for (int yi = -k2; yi <= k2; yi++)
+            illumi += tex2D(_IllumiTex, i.uv + du * xi + dv * yi) * Gaussian(xi, yi);
+    
+    //illumi /= k * k;
+    
+    half4 albedo = tex2D(_AlbedoTex, i.uv);
+    return illumi* albedo;
+    //return tex2D(_IllumiTex, i.uv);
+    //float2 p = i.uv * 2 - float2(1, 1);
+    //float g = Gaussian(p);
+    //return float4(g,g,g,1);
+
+}
+ENDCG
+}
+
 	}
 }

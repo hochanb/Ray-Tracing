@@ -11,7 +11,8 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
         TriangleTestCount = 1,
         BoxTestCount = 2,
         Distance = 3,
-        Normal = 4
+        Normal = 4,
+        Albedo = 5,
     }
 
     [Header("Main Settings")]
@@ -47,6 +48,10 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
     Material accumulateMaterial;
     RenderTexture resultTexture;
 
+    RenderTexture albedoTexture;
+    RenderTexture illumiTexture;
+
+
     // Buffers
     ComputeBuffer triangleBuffer;
     ComputeBuffer nodeBuffer;
@@ -70,7 +75,12 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
         numAccumulatedFrames = 0;
         hasBVH = false;
     }
+    private void Start()
+    {
 
+        albedoTexture = new RenderTexture(Screen.width, Screen.height, 0);
+        illumiTexture = new RenderTexture(Screen.width, Screen.height, 0);
+    }
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -130,8 +140,23 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
 
                     // Run the ray tracing shader and draw the result to a temp texture
                     rayTracingMaterial.SetInt("Frame", numAccumulatedFrames);
+                    //Graphics.Blit(null, currentFrame, rayTracingMaterial);
+                    
+                    //RenderTexture illumiTexture = RenderTexture.GetTemporary(src.width, src.height, 0, ShaderHelper.RGBA_SFloat);
+                    rayTracingMaterial.SetTexture("_IllumiTex", illumiTexture);
+                    Graphics.SetRenderTarget(illumiTexture);
+                    Graphics.Blit(src, rayTracingMaterial,0);
+
+
+                    //RenderTexture albedoTexture = RenderTexture.GetTemporary(src.width, src.height, 0, ShaderHelper.RGBA_SFloat);
+                    rayTracingMaterial.SetTexture("_AlbedoTex", albedoTexture);
+                    Graphics.SetRenderTarget(albedoTexture);
+                    Graphics.Blit(src, rayTracingMaterial, 1);
+
+
                     RenderTexture currentFrame = RenderTexture.GetTemporary(src.width, src.height, 0, ShaderHelper.RGBA_SFloat);
-                    Graphics.Blit(null, currentFrame, rayTracingMaterial);
+                    Graphics.SetRenderTarget(null);
+                    Graphics.Blit(src,currentFrame,rayTracingMaterial,2);
 
                     // Accumulate
                     accumulateMaterial.SetInt("_Frame", numAccumulatedFrames);
@@ -149,7 +174,20 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
                 else
                 {
                     numAccumulatedFrames = 0;
-                    Graphics.Blit(null, target, rayTracingMaterial);
+                    //RenderTexture illumiTexture = RenderTexture.GetTemporary(src.width, src.height, 0, ShaderHelper.RGBA_SFloat);
+                    rayTracingMaterial.SetTexture("_IllumiTex", illumiTexture);
+                    Graphics.SetRenderTarget(illumiTexture);
+                    Graphics.Blit(src, rayTracingMaterial, 0);
+
+
+                    //RenderTexture albedoTexture = RenderTexture.GetTemporary(src.width, src.height, 0, ShaderHelper.RGBA_SFloat);
+                    rayTracingMaterial.SetTexture("_AlbedoTex", albedoTexture);
+                    Graphics.SetRenderTarget(albedoTexture);
+                    Graphics.Blit(src, rayTracingMaterial, 1);
+
+
+                    Graphics.Blit(src, target, rayTracingMaterial, 2);
+
                 }
             }
             else
@@ -170,6 +208,11 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
         ShaderHelper.InitMaterial(accumulateShader, ref accumulateMaterial);
         ShaderHelper.CreateRenderTexture(ref resultTexture, Screen.width, Screen.height, FilterMode.Bilinear, ShaderHelper.RGBA_SFloat, "Result");
         models = FindObjectsOfType<Model>();
+
+
+        // Assign to shader material
+        rayTracingMaterial.SetTexture("_AlbedoTex", albedoTexture);
+        rayTracingMaterial.SetTexture("_IllumiTex", illumiTexture);
 
         if (!hasBVH)
         {
