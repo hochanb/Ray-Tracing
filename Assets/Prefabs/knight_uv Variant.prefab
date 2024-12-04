@@ -112,7 +112,7 @@ MonoBehaviour:
   logBVHStats: 0
   materialAsset: {fileID: 0}
   meshRenderer: {fileID: 1518508852338191166}
-  materialObjectID: -327380
+  materialObjectID: -70292
 --- !u!23 &1518508852338191166 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: e9686fd124b8c2441837acf214871890, type: 3}
