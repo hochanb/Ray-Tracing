@@ -28,6 +28,8 @@ public struct RayTracingMaterial
 
 	[Range(0, 10)] public float eta;
 
+	[Range(0, 10)] public float density; // 1 is fully dense
+
 
 
 	public void SetDefaultValues()
@@ -40,6 +42,7 @@ public struct RayTracingMaterial
 		specularProbability = 1;
 		transparency = 0;
 		eta = 1;
+		density = 0.5f;
 	}
 
 }
