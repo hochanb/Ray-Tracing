@@ -20,21 +20,85 @@ struct appdata
 {
     float4 vertex : POSITION;
     float2 uv : TEXCOORD0;
+
+};
+			struct v2f
+			{
+				float2 uv : TEXCOORD0;
+				float4 vertex : SV_POSITION;
+			};
+
+			v2f vert(appdata v)
+			{
+				v2f o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.uv = v.uv;
+				return o;
+			}
+
+			// --- Settings and constants ---
+			static const float PI = 3.1415;
+
+			// Raytracing Settings
+			int MaxBounceCount;
+			int NumRaysPerPixel;
+			int Frame;
+
+			// Camera settings
+			float DefocusStrength;
+			float DivergeStrength;
+			float3 ViewParams;
+			float4x4 CamLocalToWorldMatrix;
+
+			// Sky settings
+			int UseSky;
+			float3 SunColour;
+			float SunFocus = 500;
+			float SunIntensity = 10;
+
+			// Debug settings
+			int visMode;
+			float debugVisScale;
+
+			// --- Structures ---
+			struct Ray
+			{
+				float3 origin;
+				float3 dir;
+				float3 invDir;
+			};
+
+			struct Triangle
+			{
+				float3 posA, posB, posC;
+				float3 normA, normB, normC;
+			};
+
+			struct TriangleHitInfo
+			{
+				bool didHit;
+				float dst;
+				float3 hitPoint;
+				float3 normal;
+				int triIndex;
+				bool hitFront;
+			};
+
+			struct RayTracingMaterial
+			{
+				float4 colour;
+				float4 emissionColour;
+				float4 specularColour;
+				float emissionStrength;
+				float smoothness;
+				float specularProbability;
+				int flag;
+				// extended (Be sure to match with structure that has been defined in C#)
+				float transparency;
+				float eta;
+				float density;
 };
 
-struct v2f
-{
-    float2 uv : TEXCOORD0;
-    float4 vertex : SV_POSITION;
-};
-
-v2f vert(appdata v)
-{
-    v2f o;
-    o.vertex = UnityObjectToClipPos(v.vertex);
-    o.uv = v.uv;
-    return o;
-}
 
 			// --- Settings and constants ---
 static const float PI = 3.1415;
@@ -344,13 +408,12 @@ TriangleHitInfo RayTriangleBVH(inout Ray ray, float rayLength, int nodeOffset, i
     return result;
 }
 
-
-
-ModelHitInfo CalculateRayCollision(Ray worldRay, out int2 stats)
+ModelHitInfo CalculateRayCollision(Ray worldRay, out int2 stats, inout uint rngState)
 {
     ModelHitInfo result;
     result.dst = 1.#INF;
     Ray localRay;
+
     [loop]
     for (int i = 0; i < modelCount; i++)
     {
@@ -362,36 +425,104 @@ ModelHitInfo CalculateRayCollision(Ray worldRay, out int2 stats)
 
 		// Traverse bvh to find closest triangle intersection with current model
         TriangleHitInfo hit = RayTriangleBVH(localRay, result.dst, model.nodeOffset, model.triOffset, stats);
-
-		// Record closest hit
-        if (hit.dst < result.dst)
+        if (model.material.flag == 3)  // FOG
         {
-            result.didHit = true;
-            result.dst = hit.dst;
-            result.uv = hit.uv;
-            result.hitPoint = worldRay.origin + worldRay.dir * hit.dst;
-            result.material = model.material;
-            result.hitFront = hit.hitFront;
-            
-			// Apply normal map if present
-            float3 worldNormal = normalize(mul(model.localToWorldMatrix, float4(hit.normal, 0)));
-            if (model.material.normalTex > 0)
+            Ray backRay;
+            backRay.origin = localRay.origin;
+            backRay.dir = -localRay.dir;
+            backRay.invDir = 1 / backRay.dir;
+
+            TriangleHitInfo backHit = RayTriangleBVH(backRay, 1.#INF, model.nodeOffset, model.triOffset, stats);
+            TriangleHitInfo frontHit = RayTriangleBVH(localRay, 1.#INF, model.nodeOffset, model.triOffset, stats);
+
+            if (!backHit.didHit && !frontHit.didHit) 
             {
-                float3 worldTangent = normalize(mul(model.localToWorldMatrix, float4(hit.tangent, 0)));
-                float3 worldBitangent = normalize(mul(model.localToWorldMatrix, float4(hit.bitangent, 0)));
-                result.normal = SampleAndTransformNormalMap(float3(hit.uv, model.material.normalTex), worldTangent,worldBitangent,worldNormal);
-                //result.normal = normalize(mul(model.localToWorldMatrix, float4(calculatedNormal, 0)));
-                //result.normal = normalize(mul(model.localToWorldMatrix, float4(calculatedNormal, 0)));
-                
+                continue;
+            }
+
+            if (!frontHit.didHit) 
+            {
+                continue;
+            }
+
+            if (frontHit.hitFront)
+            {
+                Ray afterRay;
+                afterRay.origin = frontHit.hitPoint - frontHit.normal * 1E-6;
+                afterRay.dir = localRay.dir;
+                afterRay.invDir = 1 / afterRay.dir;
+
+                TriangleHitInfo afterHit = RayTriangleBVH(afterRay, 1.#INF, model.nodeOffset, model.triOffset, stats);
+
+                float rayLength = length(afterRay.dir);
+                float distInside = afterHit.dst * rayLength;
+                float distOutside = frontHit.dst * rayLength;
+                float hitDist = -1 * log(RandomValue(rngState)) / model.material.density ;
+
+                if (!(distInside / rayLength < hitDist || (hitDist + distOutside) / rayLength > result.dst))
+                {
+                    result.didHit = true;
+                    result.dst = (distOutside + hitDist) / rayLength;
+                    result.normal = RandomDirection(rngState);
+                    result.hitPoint = worldRay.origin + worldRay.dir * (distOutside + hitDist) / rayLength;
+                    result.material = model.material;
+                    result.hitFront = frontHit.hitFront;
+                }
+
             }
             else
-                result.normal = worldNormal;
-			
+            {
+                float rayLength = length(localRay.dir);
+                float distInside = frontHit.dst * rayLength;
+                float hitDist = -1 * log(RandomValue(rngState)) / model.material.density ;
+
+                if (!(distInside / rayLength < hitDist || hitDist / rayLength > result.dst))
+                {
+                    result.didHit = true;
+                    result.dst = hitDist / rayLength;
+                    result.normal = RandomDirection(rngState);
+                    result.hitPoint = worldRay.origin + worldRay.dir * hitDist / rayLength;
+                    result.material = model.material;
+                    result.hitFront = frontHit.hitFront;
+                }
+            }
+        }
+        else 
+        {
+            // Traverse bvh to find closest triangle intersection with current model
+            TriangleHitInfo hit = RayTriangleBVH(localRay, result.dst, model.nodeOffset, model.triOffset, stats);
+
+            // Record closest hit
+            if (hit.dst < result.dst)
+            {
+                result.didHit = true;
+                result.dst = hit.dst;
+                result.normal = normalize(mul(model.localToWorldMatrix, float4(hit.normal, 0)));
+                result.hitPoint = worldRay.origin + worldRay.dir * hit.dst;
+                result.material = model.material;
+                result.hitFront = hit.hitFront;
+
+                // Apply normal map if present
+                float3 worldNormal = normalize(mul(model.localToWorldMatrix, float4(hit.normal, 0)));
+                if (model.material.normalTex > 0)
+                {
+                    float3 worldTangent = normalize(mul(model.localToWorldMatrix, float4(hit.tangent, 0)));
+                    float3 worldBitangent = normalize(mul(model.localToWorldMatrix, float4(hit.bitangent, 0)));
+                    result.normal = SampleAndTransformNormalMap(float3(hit.uv, model.material.normalTex), worldTangent,worldBitangent,worldNormal);
+                    //result.normal = normalize(mul(model.localToWorldMatrix, float4(calculatedNormal, 0)));
+                    //result.normal = normalize(mul(model.localToWorldMatrix, float4(calculatedNormal, 0)));
+                    
+                }
+                else
+                    result.normal = worldNormal;
+            }
         }
     }
 
     return result;
 }
+
+
 
 float2 mod2(float2 x, float2 y)
 {
@@ -424,82 +555,75 @@ float3 Trace(float3 rayOrigin, float3 rayDir, inout uint rngState)
         if (hitInfo.didHit)
         {
             dstSum += hitInfo.dst;
-            RTMatData material = hitInfo.material;
-			
-			
+            RayTracingMaterial material = hitInfo.material;
             if (material.flag == 1) // Checker pattern
             {
                 float2 c = mod2(floor(hitInfo.hitPoint.xz), 2.0);
                 material.colour = c.x == c.y ? material.colour : material.emissionColour;
             }
-						
-			// specular multiplier
-            float s = material.roughnessTex > 0 ? (1 - UNITY_SAMPLE_TEX2DARRAY(RoughnessTextures, float3(hitInfo.uv, material.roughnessTex)).x) : 1;
+                // specular multiplier
+                float s = material.roughnessTex > 0 ? (1 - UNITY_SAMPLE_TEX2DARRAY(RoughnessTextures, float3(hitInfo.uv, material.roughnessTex)).x) : 1;
 
-			// Figure out new ray position and direction
-            bool isSpecularBounce = s * material.specularProbability >= RandomValue(rngState);
+                // Figure out new ray position and direction
+                bool isSpecularBounce = s * material.specularProbability >= RandomValue(rngState);
 
-            rayOrigin = hitInfo.hitPoint;
-            float3 diffuseDir = normalize(hitInfo.normal + RandomDirection(rngState));
-            float3 specularDir = reflect(rayDir, hitInfo.normal);
-            float eta_div = hitInfo.hitFront ? 1.0 / material.eta : material.eta;
-            float3 refractDir = refract(rayDir, hitInfo.normal, eta_div);
-						
-            if (material.transparency == 0)
-            {
-                rayDir = normalize(lerp(diffuseDir, specularDir, s * material.smoothness * isSpecularBounce));
-            }
-            else
-            {
-				// Check total internal reflection
-                float cosTheta = min(1.0, dot(-rayDir, hitInfo.normal));
-                float sinTheta = sqrt(1 - cosTheta * cosTheta);
-                float sinPhi = sinTheta * eta_div;
-
-				// Schlick's approximation
-                float reflectProb = reflectance(cosTheta, eta_div);
-
-
-                if (sinPhi > 1 || RandomValue(rngState) < reflectProb)
-                {
-                    rayDir = specularDir;
+                rayOrigin = hitInfo.hitPoint;
+                float3 diffuseDir = normalize(hitInfo.normal + RandomDirection(rngState));
+                float3 specularDir = reflect(rayDir, hitInfo.normal);
+                float eta_div = hitInfo.hitFront ? 1.0 / material.eta : material.eta;
+                float3 refractDir = refract(rayDir, hitInfo.normal, eta_div);
+                
+                if (material.transparency == 0 && material.flag != 3) {
+                    rayDir = normalize(lerp(diffuseDir, specularDir, s * material.smoothness * isSpecularBounce));
                 }
-                else
+                else if (material.flag == 3) 
                 {
-                    if (hitInfo.hitFront)
-                    {
-						// Div with transparency
-                        if (RandomValue(rngState) < material.transparency)
+                    rayDir = RandomDirection(rngState);
+                } 
+                else 
+                {
+                    // Check total internal reflection
+                    float cosTheta = min(1.0, dot(-rayDir, hitInfo.normal));
+                    float sinTheta = sqrt(1 - cosTheta * cosTheta);
+                    float sinPhi = sinTheta * eta_div;
+
+                    // Schlick's approximation
+                    float reflectProb = reflectance(cosTheta, eta_div);
+
+
+                    if (sinPhi > 1 || RandomValue(rngState) < reflectProb) {
+                        rayDir = specularDir;
+                    } else {
+                        if (hitInfo.hitFront) {
+                            // Div with transparency
+                            if (RandomValue(rngState) < material.transparency) {
+                                rayDir = refractDir;
+                            } else {
+                                rayDir = normalize(lerp(diffuseDir, specularDir, s * material.smoothness * isSpecularBounce));
+                            }
+                        } else {
+                            // Div without transparency
                             rayDir = refractDir;
-                        else
-                            rayDir = normalize(lerp(diffuseDir, specularDir, s * material.smoothness * isSpecularBounce));
+                        }
                     }
-                    else
-                    {
-						// Div without transparency
-                        rayDir = refractDir;
-                    }
+
                 }
 
-            }
+                // Update light calculations
+                float3 emittedLight = material.emissionColour * material.emissionStrength;
+                incomingLight += emittedLight * rayColour;
+                float4 albedoColor = material.albedoTex > 0 ? material.colour * UNITY_SAMPLE_TEX2DARRAY(AlbedoTextures, float3(hitInfo.uv, material.albedoTex)) : material.colour;
+                //float4 albedoColor = float4(hitInfo.uv, 0, 1);
 
-						// Update light calculations
-            float3 emittedLight = material.emissionColour * material.emissionStrength;
-            incomingLight += emittedLight * rayColour;
-			
-			
-            float4 albedoColor = material.albedoTex > 0 ? material.colour * UNITY_SAMPLE_TEX2DARRAY(AlbedoTextures, float3(hitInfo.uv, material.albedoTex)) : material.colour;
-						//float4 albedoColor = float4(hitInfo.uv, 0, 1);
-			
-            rayColour *= lerp(albedoColor, material.specularColour, isSpecularBounce);
+                rayColour *= lerp(albedoColor, material.specularColour, isSpecularBounce);
 
-						// Random early exit if ray colour is nearly 0 (can't contribute much to final result)
-            float p = max(rayColour.r, max(rayColour.g, rayColour.b));
-            if (RandomValue(rngState) >= p)
-            {
-                break;
-            }
-            rayColour *= 1.0f / p;
+                // Random early exit if ray colour is nearly 0 (can't contribute much to final result)
+                float p = max(rayColour.r, max(rayColour.g, rayColour.b));
+                if (RandomValue(rngState) >= p) {
+                    break;
+                }
+                rayColour *= 1.0f / p;
+            
         }
         else
         {
@@ -512,13 +636,13 @@ float3 Trace(float3 rayOrigin, float3 rayDir, inout uint rngState)
 }
 
 
-float3 TraceDebugMode(float3 rayOrigin, float3 rayDir)
+float3 TraceDebugMode(float3 rayOrigin, float3 rayDir, inout uint rngState)
 {
     int2 stats; // num triangle tests, num bounding box tests
     Ray ray;
     ray.origin = rayOrigin;
     ray.dir = rayDir;
-    ModelHitInfo hitInfo = CalculateRayCollision(ray, stats);
+    ModelHitInfo hitInfo = CalculateRayCollision(ray, stats, rngState);
 
 				// Triangle test count vis
     if (visMode == 1)
@@ -565,9 +689,9 @@ float4 frag(v2f i) : SV_Target
     float3 camUp = CamLocalToWorldMatrix._m01_m11_m21;
 
 				// Debug Mode
-#if DEBUG_VIS
-					return float4(TraceDebugMode(_WorldSpaceCameraPos, normalize(focusPoint - _WorldSpaceCameraPos)), 1);
-#endif
+				#if DEBUG_VIS
+					return float4(TraceDebugMode(_WorldSpaceCameraPos, normalize(focusPoint - _WorldSpaceCameraPos), rngState), 1);
+				#endif
 				
 				// Trace multiple rays and average together
     float3 totalIncomingLight = 0;

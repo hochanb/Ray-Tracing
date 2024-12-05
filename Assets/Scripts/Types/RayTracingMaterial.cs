@@ -29,6 +29,8 @@ public class RayTracingMaterial
 	public Texture2D albedoTex;
 	public Texture2D normalTex;
 	public Texture2D roughnessTex;
+	[Range(0, 10)] public float density; // 1 is fully dense
+
 
 	public int albedoIdx { get; set; }
 	public int normalIdx { get; set; }
@@ -44,6 +46,7 @@ public class RayTracingMaterial
 		specularProbability = 0;
 		transparency = 0;
 		eta = 1;
+		density = 0.5f;
 	}
 
 }
