@@ -14,6 +14,8 @@ public class TickManager : MonoBehaviour
     [SerializeField, Tooltip("Framerate of ticks which would be played as video")]
     float tickRate = 30.0f;
 
+    [SerializeField, Tooltip("Skip ticks and starts from here")]
+    int startTicks = 0;
     [SerializeField, Tooltip("Stop if total ticks reaches the max value. Set 0 for infinite")]
     int maxTicks = 0;
 
@@ -38,6 +40,37 @@ public class TickManager : MonoBehaviour
         monos = allMonos.Where(m=>m is ITickUpdate).Select(m=>m as ITickUpdate).ToArray();
     }
 
+    private void Start()
+    {
+        if(startTicks > 0)
+        {
+            running = false;
+
+            int max = Mathf.Min(startTicks, maxTicks);
+            Debug.Log($"Simulating ticks from 0 to {max-1}. It could take some times");
+            int i = 0;
+            for (; i < max; i++)
+            {
+                TickUpdateAll(true);
+
+                totalTicks++;
+            }
+            Debug.Log($"Starting tick from {i}");
+            if (totalTicks >= maxTicks)
+            {
+
+                running = false;
+#if UNITY_EDITOR
+                if (EditorApplication.isPlaying)
+                    EditorApplication.isPaused = true;
+#endif
+            }
+            else
+                running = true;
+
+        }
+    }
+
     private void Update()
     {
         if (!running) return;
@@ -47,7 +80,7 @@ public class TickManager : MonoBehaviour
         if(counter >= framesPerTick)
         {
             counter = 0;
-            TickUpdateAll();
+            TickUpdateAll(false);
             totalTicks++;
             if(totalTicks >= maxTicks) 
             {
@@ -62,16 +95,16 @@ public class TickManager : MonoBehaviour
         }
     }
 
-    void TickUpdateAll()
+    void TickUpdateAll(bool skiptick)
     {
         if(monos is null) return;
 
         foreach (var m in monos)
-            m.EarlyTickUpdate(dt);
+            m.EarlyTickUpdate(dt, skiptick);
         foreach (var m in monos)
-            m.TickUpdate(dt);
+            m.TickUpdate(dt, skiptick);
         foreach (var m in monos)
-            m.LateTickUpdate(dt);
+            m.LateTickUpdate(dt, skiptick);
 
         Debug.Log("Total ticks: " + (totalTicks+1) + " / elapsed time: " + Time.timeSinceLevelLoad);
     }

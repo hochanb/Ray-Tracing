@@ -22,14 +22,14 @@ public class RayTracingMaterial
 	//[Header("Extended")]
 	// Add other properties
 	[Range(0, 1)] public float transparency;    // 0 is full opaque
-
 	[Range(0, 3)] public float eta;
+	[Range(0, 10)] public float density; // 1 is fully dense
+
 
 	// texture indices
 	public Texture2D albedoTex;
 	public Texture2D normalTex;
 	public Texture2D roughnessTex;
-	[Range(0, 10)] public float density; // 1 is fully dense
 
 
 	public int albedoIdx { get; set; }
@@ -74,8 +74,9 @@ public struct RTMatData
 	public readonly MaterialFlag flag;
     public readonly float transparency;    
     public readonly float eta;
+	public readonly float density; // 1 is fully dense
 	public int albetoTex;
-	public int normalTex;
+    public int normalTex;
 	public int roughnessTex;
 
 	public RTMatData(RayTracingMaterial rtMat)
@@ -90,6 +91,7 @@ public struct RTMatData
 		flag = rtMat.flag;
 		transparency = rtMat.transparency;
 		eta= rtMat.eta;
+		density = rtMat.density;
 		// texture indices should be mapped by raytracing manager
 		albetoTex = rtMat.albedoIdx;
 		normalTex = rtMat.normalIdx;

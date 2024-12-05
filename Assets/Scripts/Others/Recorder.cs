@@ -11,8 +11,13 @@ public class Recorder : MonoBehaviour,ITickUpdate
 
     bool wait;
 
-    public void EarlyTickUpdate(float dt)
+    public void EarlyTickUpdate(float dt, bool skip)
     {
+        if (skip)
+        {
+            frameCount++;
+            return;
+        }
         CaptureFrame();
     }
 

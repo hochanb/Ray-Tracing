@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 using System.Collections.Generic;
 using System.Linq;
 
-public class RayTracingManager : MonoBehaviour, ITickUpdate
+public class RayTracingManager : MonoBehaviour
 {
     public enum VisMode
     {
@@ -276,7 +276,7 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
             int idx = 0;
 
             if (model.Material.albedoTex == null)
-            { }
+            { idx = 0; }
             else if (albedoTexLookup.TryGetValue(model.Material.albedoTex, out idx))
             { }
             else
@@ -289,7 +289,7 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
             model.Material.albedoIdx = idx;
 
             if (model.Material.normalTex == null)
-            { }
+            { idx = 0; }
             else if (normalTexLookup.TryGetValue(model.Material.normalTex, out idx))
             { }
             else
@@ -302,7 +302,7 @@ public class RayTracingManager : MonoBehaviour, ITickUpdate
             model.Material.normalIdx = idx;
 
             if (model.Material.roughnessTex == null)
-            { }
+            { idx = 0; }
             else if (roughnessTexLookup.TryGetValue(model.Material.roughnessTex, out idx))
             { }
             else

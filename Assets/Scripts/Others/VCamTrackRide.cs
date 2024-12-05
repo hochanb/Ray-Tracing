@@ -20,7 +20,7 @@ public class VCamTrackRide : MonoBehaviour, ITickUpdate
         if (startFromZero)
             dolly.m_PathPosition = 0;
     }
-    public void TickUpdate(float dt)
+    public void TickUpdate(float dt, bool skip)
     {
         if (playTime <= 0.01f || dolly == null || dollyPath == null) return;
 

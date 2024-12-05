@@ -22,118 +22,52 @@ struct appdata
     float2 uv : TEXCOORD0;
 
 };
-			struct v2f
-			{
-				float2 uv : TEXCOORD0;
-				float4 vertex : SV_POSITION;
-			};
-
-			v2f vert(appdata v)
-			{
-				v2f o;
-				o.vertex = UnityObjectToClipPos(v.vertex);
-				o.uv = v.uv;
-				return o;
-			}
-
-			// --- Settings and constants ---
-			static const float PI = 3.1415;
-
-			// Raytracing Settings
-			int MaxBounceCount;
-			int NumRaysPerPixel;
-			int Frame;
-
-			// Camera settings
-			float DefocusStrength;
-			float DivergeStrength;
-			float3 ViewParams;
-			float4x4 CamLocalToWorldMatrix;
-
-			// Sky settings
-			int UseSky;
-			float3 SunColour;
-			float SunFocus = 500;
-			float SunIntensity = 10;
-
-			// Debug settings
-			int visMode;
-			float debugVisScale;
-
-			// --- Structures ---
-			struct Ray
-			{
-				float3 origin;
-				float3 dir;
-				float3 invDir;
-			};
-
-			struct Triangle
-			{
-				float3 posA, posB, posC;
-				float3 normA, normB, normC;
-			};
-
-			struct TriangleHitInfo
-			{
-				bool didHit;
-				float dst;
-				float3 hitPoint;
-				float3 normal;
-				int triIndex;
-				bool hitFront;
-			};
-
-			struct RayTracingMaterial
-			{
-				float4 colour;
-				float4 emissionColour;
-				float4 specularColour;
-				float emissionStrength;
-				float smoothness;
-				float specularProbability;
-				int flag;
-				// extended (Be sure to match with structure that has been defined in C#)
-				float transparency;
-				float eta;
-				float density;
+struct v2f
+{
+	float2 uv : TEXCOORD0;
+	float4 vertex : SV_POSITION;
 };
 
+v2f vert(appdata v)
+{
+	v2f o;
+	o.vertex = UnityObjectToClipPos(v.vertex);
+	o.uv = v.uv;
+	return o;
+}
 
-			// --- Settings and constants ---
+// --- Settings and constants ---
 static const float PI = 3.1415;
 
-			// Raytracing Settings
+// Raytracing Settings
 int MaxBounceCount;
 int NumRaysPerPixel;
 int Frame;
 
-			// Camera settings
+// Camera settings
 float DefocusStrength;
 float DivergeStrength;
 float3 ViewParams;
 float4x4 CamLocalToWorldMatrix;
 
-			// Sky settings
+// Sky settings
 int UseSky;
 float3 SunColour;
 float SunFocus = 500;
 float SunIntensity = 10;
 
-			// Debug settings
+// Debug settings
 int visMode;
 float debugVisScale;
 
-			// Textures
-			//Texture2DArray AlbedoTextures;
-			//Texture2DArray NormalTextures;
-			//Texture2DArray RoughnessTextures;
-			UNITY_DECLARE_TEX2DARRAY(AlbedoTextures);
-			UNITY_DECLARE_TEX2DARRAY(NormalTextures);
-			UNITY_DECLARE_TEX2DARRAY(RoughnessTextures);
-			//SamplerState Sampler;
 
-			// --- Structures ---
+// Textures
+UNITY_DECLARE_TEX2DARRAY(AlbedoTextures);
+UNITY_DECLARE_TEX2DARRAY(NormalTextures);
+UNITY_DECLARE_TEX2DARRAY(RoughnessTextures);
+
+
+// --- Structures ---
 struct Ray
 {
     float3 origin;
@@ -174,6 +108,7 @@ struct RTMatData
 				// extended (Be sure to match with structure that has been defined in C#)
     float transparency;
     float eta;
+	float density;
 				// texture index
     int albedoTex;
     int normalTex;
@@ -210,17 +145,17 @@ struct ModelHitInfo
     bool hitFront;
 };
 
-			// --- Buffers (and their sizes) ---	
+// --- Buffers (and their sizes) ---
 StructuredBuffer<Model> ModelInfo;
 StructuredBuffer<Triangle> Triangles;
 StructuredBuffer<BVHNode> Nodes;
 int triangleCount;
 int modelCount;
 
-			// ---- RNG Functions ----
+// ---- RNG Functions ----
 
-			// PCG (permuted congruential generator). Thanks to:
-			// www.pcg-random.org and www.shadertoy.com/view/XlGcRh
+// PCG (permuted congruential generator). Thanks to:
+// www.pcg-random.org and www.shadertoy.com/view/XlGcRh
 uint NextRandom(inout uint state)
 {
     state = state * 747796405 + 2891336453;
@@ -412,6 +347,7 @@ ModelHitInfo CalculateRayCollision(Ray worldRay, out int2 stats, inout uint rngS
 {
     ModelHitInfo result;
     result.dst = 1.#INF;
+    result.uv = float2(0, 0);
     Ray localRay;
 
     [loop]
@@ -501,6 +437,7 @@ ModelHitInfo CalculateRayCollision(Ray worldRay, out int2 stats, inout uint rngS
                 result.hitPoint = worldRay.origin + worldRay.dir * hit.dst;
                 result.material = model.material;
                 result.hitFront = hit.hitFront;
+                result.uv = hit.uv;
 
                 // Apply normal map if present
                 float3 worldNormal = normalize(mul(model.localToWorldMatrix, float4(hit.normal, 0)));
@@ -550,12 +487,12 @@ float3 Trace(float3 rayOrigin, float3 rayDir, inout uint rngState)
         Ray ray;
         ray.origin = rayOrigin + rayDir * 1E-6;
         ray.dir = rayDir;
-        ModelHitInfo hitInfo = CalculateRayCollision(ray, stats);
+        ModelHitInfo hitInfo = CalculateRayCollision(ray, stats,rngState);
 
         if (hitInfo.didHit)
         {
             dstSum += hitInfo.dst;
-            RayTracingMaterial material = hitInfo.material;
+            RTMatData material = hitInfo.material;
             if (material.flag == 1) // Checker pattern
             {
                 float2 c = mod2(floor(hitInfo.hitPoint.xz), 2.0);

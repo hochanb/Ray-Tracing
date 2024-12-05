@@ -4,11 +4,24 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(RayTracingManager))]
-public class Focus : MonoBehaviour
+public class Focus : MonoBehaviour, ITickUpdate
 {
     [SerializeField] Transform target;
 
+    RayTracingManager manager;
+
     private void Start()
+    {
+        manager ??= GetComponent<RayTracingManager>();
+        SetFocus();
+    }
+    private void Update()
+    {
+        SetFocus();
+
+    }
+
+    public void LateTickUpdate(float dt, bool skip)
     {
         SetFocus();
     }
@@ -25,7 +38,7 @@ public class Focus : MonoBehaviour
         ray.direction.Normalize();
         if(Physics.Raycast(ray,out var hitInfo))
         {
-            var manager = GetComponent<RayTracingManager>();
+            manager ??= GetComponent<RayTracingManager>();
             manager.FocusDistance = Vector3.Dot(transform.forward, hitInfo.distance * ray.direction);
 
         }
