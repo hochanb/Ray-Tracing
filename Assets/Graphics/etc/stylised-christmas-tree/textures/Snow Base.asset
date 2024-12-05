@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5bfd1ca12deff3428df9e49d5542f04, type: 3}
+  m_Name: Snow Base
+  m_EditorClassIdentifier: 
+  material:
+    colour: {r: 1, g: 1, b: 1, a: 1}
+    emissionColour: {r: 1, g: 1, b: 1, a: 1}
+    specularColour: {r: 1, g: 1, b: 1, a: 1}
+    emissionStrength: 0
+    smoothness: 0
+    specularProbability: 0
+    flag: 0
+    transparency: 0
+    eta: 1
+    albedoTex: {fileID: 2800000, guid: 1fb040599b265494ba3357dbc4b1f20d, type: 3}
+    normalTex: {fileID: 2800000, guid: 7ed839e77263a9941b76b5b874b8c79f, type: 3}
+    roughnessTex: {fileID: 2800000, guid: f19a0e29424591c469fe4573b4d39b41, type: 3}
