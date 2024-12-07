@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5bfd1ca12deff3428df9e49d5542f04, type: 3}
+  m_Name: Cart body
+  m_EditorClassIdentifier: 
+  material:
+    colour: {r: 1, g: 1, b: 1, a: 1}
+    emissionColour: {r: 1, g: 1, b: 1, a: 1}
+    specularColour: {r: 1, g: 1, b: 1, a: 1}
+    emissionStrength: 0
+    smoothness: 0.672
+    specularProbability: 0.147
+    flag: 0
+    transparency: 0
+    eta: 1
+    density: 0.5
+    albedoTex: {fileID: 2800000, guid: 55f0bc3aad989a545a8ddf3393248f1f, type: 3}
+    normalTex: {fileID: 2800000, guid: 9874646194dc2e0459c9618ddca948fa, type: 3}
+    roughnessTex: {fileID: 2800000, guid: 42c27090c0fc0e14faa709afc4ab03bc, type: 3}

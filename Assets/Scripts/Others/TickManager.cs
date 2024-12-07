@@ -1,9 +1,9 @@
 using NaughtyAttributes;
-using System.Collections;
-using System.Collections.Generic;
+using System;
+
 using System.Linq;
+using TMPro;
 using UnityEditor;
-using UnityEditor.Experimental.Rendering;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -22,6 +22,15 @@ public class TickManager : MonoBehaviour
     [SerializeField]
     bool runOnAwake = true;
 
+
+    [SerializeField]
+    TextMeshProUGUI currentTickTMP;
+    [SerializeField]
+    TextMeshProUGUI fpsTMP;
+    [SerializeField]
+    TextMeshProUGUI timeTMP;
+
+    public Action onTickAllDone;
     float dt => 1 / tickRate;
 
 
@@ -34,6 +43,11 @@ public class TickManager : MonoBehaviour
 
     private void Awake()
     {
+        if(GameSettings.Instance != null)
+        {
+            startTicks = GameSettings.Instance.StartTick;
+        }
+
         if (runOnAwake)
             Run();
         var allMonos = FindObjectsOfType<MonoBehaviour>();
@@ -64,6 +78,7 @@ public class TickManager : MonoBehaviour
                 if (EditorApplication.isPlaying)
                     EditorApplication.isPaused = true;
 #endif
+                onTickAllDone?.Invoke();
             }
             else
                 running = true;
@@ -80,19 +95,35 @@ public class TickManager : MonoBehaviour
         if(counter >= framesPerTick)
         {
             counter = 0;
-            TickUpdateAll(false);
             totalTicks++;
-            if(totalTicks >= maxTicks) 
-            {
-                running = false;
-#if UNITY_EDITOR
-                if (EditorApplication.isPlaying)
-                {
-                    EditorApplication.isPaused = true;
-                }
-#endif
-            }
+            TickUpdateAll(false);
+
         }
+        else if(counter == 1)
+        {
+            OnAfterTick();
+        }
+
+        if (totalTicks >= maxTicks)
+        {
+            running = false;
+#if UNITY_EDITOR
+            if (EditorApplication.isPlaying)
+                EditorApplication.isPaused = true;
+#endif
+            onTickAllDone?.Invoke();
+        }
+
+
+
+    }
+
+    void OnAfterTick()
+    {
+        if (monos is null) return;
+
+        foreach (var m in monos)
+            m.LateTickUpdate(dt, false);
     }
 
     void TickUpdateAll(bool skiptick)
@@ -103,10 +134,18 @@ public class TickManager : MonoBehaviour
             m.EarlyTickUpdate(dt, skiptick);
         foreach (var m in monos)
             m.TickUpdate(dt, skiptick);
-        foreach (var m in monos)
-            m.LateTickUpdate(dt, skiptick);
+        //foreach (var m in monos)
+        //    m.LateTickUpdate(dt, skiptick);
 
-        Debug.Log("Total ticks: " + (totalTicks+1) + " / elapsed time: " + Time.timeSinceLevelLoad);
+        Debug.Log("Total ticks: " + (totalTicks) + " / elapsed time: " + Time.timeSinceLevelLoad);
+
+        timeTMP.text = "Bake Time: " + Time.timeSinceLevelLoad.ToString();
+        float ms = Time.deltaTime * 1000f;
+        float fps = 1.0f / Time.deltaTime;
+        string text = string.Format("{0:0.} FPS ({1:0.0} ms)", fps, ms);
+        fpsTMP.text = text;
+        currentTickTMP.text = "Current Tick:" + (totalTicks ).ToString();
+
     }
 
     [Button]

@@ -22,6 +22,7 @@ MonoBehaviour:
     flag: 0
     transparency: 0
     eta: 0
+    density: 0
     albedoTex: {fileID: 0}
-    normalTex: {fileID: 0}
+    normalTex: {fileID: 2800000, guid: a2462dcf66d485d44905ef0b4bc4672e, type: 3}
     roughnessTex: {fileID: 0}

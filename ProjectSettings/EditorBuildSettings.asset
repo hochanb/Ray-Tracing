@@ -6,9 +6,15 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/Scenes/Raytracing.unity
-    guid: bb1ae8763b3a1fb4ca081bcbae2a973d
+    path: 
+    guid: 00000000000000000000000000000000
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
   - enabled: 1
-    path: Assets/Scenes/Vid/Vis/GPU stall recreation.unity
-    guid: c8727b5531017e743bb94fb638b86689
+    path: Assets/Scenes/Lobby.unity
+    guid: 2d9abf74592dba046b6bdae49f3ee699
+  - enabled: 1
+    path: Assets/Scenes/Snow Test.unity
+    guid: 069ec33ab1cdc2c41984658d1f46946c
   m_configObjects: {}

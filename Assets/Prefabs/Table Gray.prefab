@@ -114,7 +114,7 @@ MonoBehaviour:
   logBVHStats: 0
   materialAsset: {fileID: 11400000, guid: ce573a745b83950449958f1e569024f1, type: 2}
   meshRenderer: {fileID: 3579261133446601343}
-  materialObjectID: -516998
+  materialObjectID: -53404
 --- !u!1 &3579261133738946732
 GameObject:
   m_ObjectHideFlags: 0
@@ -229,7 +229,7 @@ MonoBehaviour:
   logBVHStats: 0
   materialAsset: {fileID: 11400000, guid: ce7dd257f6a3e104aa6c51f807bc769b, type: 2}
   meshRenderer: {fileID: 3579261133738946720}
-  materialObjectID: -517010
+  materialObjectID: -53416
 --- !u!1 &3579261133909391108
 GameObject:
   m_ObjectHideFlags: 0
@@ -344,7 +344,7 @@ MonoBehaviour:
   logBVHStats: 0
   materialAsset: {fileID: 11400000, guid: ce7dd257f6a3e104aa6c51f807bc769b, type: 2}
   meshRenderer: {fileID: 3579261133909391128}
-  materialObjectID: -516986
+  materialObjectID: -53392
 --- !u!1 &3579261134913232469
 GameObject:
   m_ObjectHideFlags: 0

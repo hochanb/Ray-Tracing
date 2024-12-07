@@ -1,6 +1,5 @@
 using UnityEditor;
 using UnityEngine;
-using System.Diagnostics;
 using System.IO;
 using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 using System.Threading.Tasks;
@@ -12,7 +11,6 @@ public class FFmpegEditorWindow : EditorWindow
     private int framerate = 30;
 
     // FFmpeg 경로
-    private string ffmpegPath = "Assets/Scripts/Editor/ffmpeg/bin/ffmpeg.exe";
     // 프리뷰 관련 변수
     private Object videoAsset;
     private Vector2 scrollPosition;
@@ -45,7 +43,7 @@ public class FFmpegEditorWindow : EditorWindow
         // 영상 빌드 버튼
         if (GUILayout.Button("Build Video"))
         {
-            BuildVideo();
+            FFmpeg.BuildVideo(captureFolder,outputVideoPath,framerate);
         }
         // 프리뷰 버튼
         if (GUILayout.Button("Load Preview"))
@@ -104,89 +102,4 @@ public class FFmpegEditorWindow : EditorWindow
         }
     }
 
-    private async void BuildVideo()
-    {
-        if (!Directory.Exists(captureFolder))
-        {
-            UnityEngine.Debug.LogError($"Capture folder does not exist: {captureFolder}");
-            return;
-        }
-
-        if (string.IsNullOrEmpty(outputVideoPath))
-        {
-            UnityEngine.Debug.LogError("Output video path is not set.");
-            return;
-        }
-
-        if (!File.Exists(ffmpegPath))
-        {
-            UnityEngine.Debug.LogError($"FFmpeg not found at: {ffmpegPath}");
-            return;
-        }
-
-        if (!File.Exists($"{captureFolder}/frame_0000.png"))
-        {
-            UnityEngine.Debug.LogError("There should be at least one frame, starting with \"frame_0000.png\"");
-            return;
-        }
-        AssetDatabase.Refresh(); // Unity 프로젝트 갱신
-
-        string ffmpegCommand = $"-framerate {framerate} -i \"{captureFolder}/frame_%04d.png\" -c:v libx264 -profile:v baseline -preset fast  -pix_fmt yuv420p \"{outputVideoPath}\"";
-
-        UnityEngine.Debug.Log("Starting FFmpeg process...");
-        bool success = await RunFFmpegAsync(ffmpegPath, ffmpegCommand);
-
-        if (success)
-        {
-            UnityEngine.Debug.Log($"Video built successfully: {outputVideoPath}");
-            AssetDatabase.Refresh(); // Unity 프로젝트 갱신
-        }
-        else
-        {
-            UnityEngine.Debug.LogError("FFmpeg process failed.");
-        }
-    }
-
-    private Task<bool> RunFFmpegAsync(string ffmpegPath, string arguments)
-    {
-        return Task.Run(() =>
-        {
-            try
-            {
-                Process process = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = ffmpegPath,
-                        Arguments = arguments,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
-
-                process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-
-                if (process.ExitCode == 0)
-                {
-                    UnityEngine.Debug.Log($"FFmpeg Output: {output}");
-                    return true;
-                }
-                else
-                {
-                    UnityEngine.Debug.LogError($"FFmpeg Error: {error}");
-                    return false;
-                }
-            }
-            catch (System.Exception ex)
-            {
-                UnityEngine.Debug.LogError($"FFmpeg execution failed: {ex.Message}");
-                return false;
-            }
-        });
-    }
 }

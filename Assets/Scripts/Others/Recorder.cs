@@ -4,12 +4,21 @@ using System.IO;
 public class Recorder : MonoBehaviour,ITickUpdate
 {
     [SerializeField] RayTracingManager rayTracingManager;
+    [SerializeField] CanvasController[] canvas;
 
     string outputFolder = "Assets/Captures/Frames/"; // 저장 폴더 이름
 
     private int frameCount = 0;
 
     bool wait;
+
+    private void Awake()
+    {
+        if (GameSettings.Instance != null)
+        {
+            outputFolder = GameSettings.Instance.SavePath;
+        }
+    }
 
     public void EarlyTickUpdate(float dt, bool skip)
     {

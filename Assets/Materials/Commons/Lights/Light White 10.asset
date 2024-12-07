@@ -13,10 +13,16 @@ MonoBehaviour:
   m_Name: Light White 10
   m_EditorClassIdentifier: 
   material:
-    colour: {r: 1, g: 1, b: 1, a: 0}
-    emissionColour: {r: 1, g: 1, b: 1, a: 0}
+    colour: {r: 1, g: 0.8679667, b: 0.5981132, a: 0}
+    emissionColour: {r: 1, g: 0.8761259, b: 0.645283, a: 0}
     specularColour: {r: 0, g: 0, b: 0, a: 0}
     emissionStrength: 10
     smoothness: 0
     specularProbability: 0
     flag: 2
+    transparency: 0
+    eta: 0
+    density: 0
+    albedoTex: {fileID: 0}
+    normalTex: {fileID: 0}
+    roughnessTex: {fileID: 0}

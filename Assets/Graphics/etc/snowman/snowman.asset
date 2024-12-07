@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5bfd1ca12deff3428df9e49d5542f04, type: 3}
+  m_Name: snowman
+  m_EditorClassIdentifier: 
+  material:
+    colour: {r: 1, g: 1, b: 1, a: 1}
+    emissionColour: {r: 1, g: 1, b: 1, a: 1}
+    specularColour: {r: 1, g: 1, b: 1, a: 1}
+    emissionStrength: 0
+    smoothness: 0.446
+    specularProbability: 0.142
+    flag: 0
+    transparency: 0
+    eta: 1
+    density: 0.5
+    albedoTex: {fileID: 2800000, guid: ffedf1d80938ea64e9f82788cda63f50, type: 3}
+    normalTex: {fileID: 2800000, guid: e9dbfd31f12bfd04a988f759a8faff55, type: 3}
+    roughnessTex: {fileID: 2800000, guid: 3a2360e1e43e11343a5f4a6270c1a80e, type: 3}

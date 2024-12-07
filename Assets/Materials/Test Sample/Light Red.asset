@@ -16,8 +16,13 @@ MonoBehaviour:
     colour: {r: 0.8113208, g: 0.18675685, b: 0.18675685, a: 0}
     emissionColour: {r: 0.8679245, g: 0, b: 0, a: 0}
     specularColour: {r: 0, g: 0, b: 0, a: 0}
-    emissionStrength: 2.1
+    emissionStrength: 0
     smoothness: 0
     specularProbability: 0.1
     flag: 0
     transparency: 1
+    eta: 0
+    density: 0
+    albedoTex: {fileID: 0}
+    normalTex: {fileID: 0}
+    roughnessTex: {fileID: 0}
