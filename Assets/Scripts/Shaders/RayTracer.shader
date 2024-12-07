@@ -218,10 +218,13 @@ float3 SampleAndTransformNormalMap(float3 uv3, float3 tangent, float3 bitangent,
 {
 				// Sample the normal map texture
     float3 tangentSpaceNormal = UNITY_SAMPLE_TEX2DARRAY(NormalTextures, uv3).rgb;
+    //float3 tangentSpaceNormal = { 0, 0, 1 };
     tangentSpaceNormal = tangentSpaceNormal * 2.0f - 1.0f;
-    float3x3 tbn = float3x3(tangent, bitangent, normal);
+    //float3x3 tbn = float3x3(tangent, bitangent, normal);
+    float3x3 tbn = { tangent[0], bitangent[0], normal[0], tangent[1], bitangent[1], normal[1], tangent[2], bitangent[2], normal[2] };
     
-    return normalize(mul(tangentSpaceNormal,tbn));
+    //tbn = transpose(tbn);
+    return normalize(mul(tbn, tangentSpaceNormal)); //normalize(mul(tbn, tangentSpaceNormal));
 }
 
 // --- Ray Intersection Functions ---
@@ -262,7 +265,7 @@ TriangleHitInfo RayTriangle(Ray ray, Triangle tri)
         // local TBN
         hitInfo.tangent = normalize(tri.tanA * w + tri.tanB * u + tri.tanC * v);
         
-        hitInfo.bitangent = normalize(cross(hitInfo.normal, hitInfo.tangent) * (u + v)); // Using cross product to compute the bitangent
+        hitInfo.bitangent = normalize(cross(hitInfo.normal, hitInfo.tangent)); // Using cross product to compute the bitangent
 
     }
     return hitInfo;
