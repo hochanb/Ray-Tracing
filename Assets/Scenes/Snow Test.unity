@@ -2299,7 +2299,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   framesPerTick: 500
   tickRate: 30
-  startTicks: 301
+  startTicks: 361
   maxTicks: 900
   runOnAwake: 1
   currentTickTMP: {fileID: 1786650417}
@@ -5822,7 +5822,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3579261134913232554, guid: ba82f0ebfb718eb4ead9660142e130b4, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -33.83
+      value: -34.2
       objectReference: {fileID: 0}
     - target: {fileID: 3579261134913232554, guid: ba82f0ebfb718eb4ead9660142e130b4, type: 3}
       propertyPath: m_LocalPosition.z
